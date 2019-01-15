@@ -15,7 +15,7 @@ console.log(CubeImage);
 BasicGame.Boot.prototype =
 {
     preload: function () {
-//        game.load.image('cube', CubeImage);
+        game.load.image('cube', CubeImage);
 
         game.time.advancedTiming = true;
 

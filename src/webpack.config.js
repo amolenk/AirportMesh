@@ -10,6 +10,13 @@ module.exports = {
     filename: 'bundle.js',
 //    publicPath: '/'
   },
+//  watch: true,
+  resolve: { extensions: [ '.js' ] },
+  devServer: {
+    contentBase: path.join(__dirname, 'wwwroot/dist'),
+    index: 'index.html',
+    hot: true
+  },
   module: {
     rules: [ 
       {
@@ -46,13 +53,5 @@ module.exports = {
         flatten: true
       }
     ])
-  ],
-  devServer: {
-    contentBase: path.join(__dirname, 'wwwroot/'),
-    index: 'index.html',
-    hot: true
-  },
-  // resolve: {
-  //   extensions: [ '.js' ]
-  // }
+  ]
 };

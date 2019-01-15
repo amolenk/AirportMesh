@@ -4,7 +4,7 @@
   "scripts": {
     "build": "webpack --mode=development",
     "release": "webpack --mode=production",
-    "start:dev": "webpack-dev-server --mode=development"
+    "start:dev": "webpack-dev-server --hot --mode=development"
   },
   "private": true,
   "dependencies": {
