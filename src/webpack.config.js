@@ -48,7 +48,7 @@ module.exports = {
     }),
     new CopyWebpackPlugin([
       {
-        from: './node_modules/phaser-plugin-isometric/dist/*.min.js',
+        from: './ClientApp/lib/phaser-plugin-isometric.js',
       //  to: 'dist/',
         flatten: true
       }
