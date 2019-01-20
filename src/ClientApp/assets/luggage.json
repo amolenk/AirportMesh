@@ -1,0 +1,187 @@
+{
+	"frames": {
+		"./luggage-1": {
+			"frame": {
+				"h": 24,
+				"w": 32,
+				"x": 112,
+				"y": 106
+			},
+			"rotated": false,
+			"spriteSourceSize": {
+				"h": 24,
+				"w": 32,
+				"x": 0,
+				"y": 0
+			},
+			"sourceSize": {
+				"h": 24,
+				"w": 32
+			},
+			"trimmed": false
+		},
+		"./luggage-2": {
+			"frame": {
+				"h": 24,
+				"w": 32,
+				"x": 112,
+				"y": 80
+			},
+			"rotated": false,
+			"spriteSourceSize": {
+				"h": 24,
+				"w": 32,
+				"x": 0,
+				"y": 0
+			},
+			"sourceSize": {
+				"h": 24,
+				"w": 32
+			},
+			"trimmed": false
+		},
+		"./luggage-3": {
+			"frame": {
+				"h": 24,
+				"w": 32,
+				"x": 0,
+				"y": 118
+			},
+			"rotated": false,
+			"spriteSourceSize": {
+				"h": 24,
+				"w": 32,
+				"x": 0,
+				"y": 0
+			},
+			"sourceSize": {
+				"h": 24,
+				"w": 32
+			},
+			"trimmed": false
+		},
+		"./luggage-4": {
+			"frame": {
+				"h": 32,
+				"w": 32,
+				"x": 112,
+				"y": 46
+			},
+			"rotated": false,
+			"spriteSourceSize": {
+				"h": 32,
+				"w": 32,
+				"x": 0,
+				"y": 0
+			},
+			"sourceSize": {
+				"h": 32,
+				"w": 32
+			},
+			"trimmed": false
+		},
+		"./explosion-1": {
+			"frame": {
+				"h": 32,
+				"w": 40,
+				"x": 66,
+				"y": 90
+			},
+			"rotated": false,
+			"spriteSourceSize": {
+				"h": 32,
+				"w": 40,
+				"x": 11,
+				"y": 12
+			},
+			"sourceSize": {
+				"h": 61,
+				"w": 64
+			},
+			"trimmed": true
+		},
+		"./explosion-2": {
+			"frame": {
+				"h": 44,
+				"w": 48,
+				"x": 66,
+				"y": 0
+			},
+			"rotated": false,
+			"spriteSourceSize": {
+				"h": 44,
+				"w": 48,
+				"x": 6,
+				"y": 8
+			},
+			"sourceSize": {
+				"h": 61,
+				"w": 64
+			},
+			"trimmed": true
+		},
+		"./explosion-3": {
+			"frame": {
+				"h": 53,
+				"w": 58,
+				"x": 0,
+				"y": 63
+			},
+			"rotated": false,
+			"spriteSourceSize": {
+				"h": 53,
+				"w": 58,
+				"x": 1,
+				"y": 3
+			},
+			"sourceSize": {
+				"h": 61,
+				"w": 64
+			},
+			"trimmed": true
+		},
+		"./explosion-4": {
+			"frame": {
+				"h": 61,
+				"w": 64,
+				"x": 0,
+				"y": 0
+			},
+			"rotated": false,
+			"spriteSourceSize": {
+				"h": 61,
+				"w": 64,
+				"x": 0,
+				"y": 0
+			},
+			"sourceSize": {
+				"h": 61,
+				"w": 64
+			},
+			"trimmed": false
+		},
+		"./explosion-5": {
+			"frame": {
+				"h": 42,
+				"w": 44,
+				"x": 66,
+				"y": 46
+			},
+			"rotated": false,
+			"spriteSourceSize": {
+				"h": 42,
+				"w": 44,
+				"x": 7,
+				"y": 10
+			},
+			"sourceSize": {
+				"h": 61,
+				"w": 64
+			},
+			"trimmed": true
+		}
+	},
+	"meta": {
+		"image": "luggage.png"
+	}
+}

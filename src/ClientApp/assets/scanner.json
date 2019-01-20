@@ -1,0 +1,47 @@
+{
+	"frames": {
+		"./scanner-1": {
+			"frame": {
+				"h": 64,
+				"w": 64,
+				"x": 0,
+				"y": 0
+			},
+			"rotated": false,
+			"spriteSourceSize": {
+				"h": 64,
+				"w": 64,
+				"x": 0,
+				"y": 0
+			},
+			"sourceSize": {
+				"h": 64,
+				"w": 64
+			},
+			"trimmed": false
+		},
+		"./scanner-2": {
+			"frame": {
+				"h": 64,
+				"w": 64,
+				"x": 66,
+				"y": 0
+			},
+			"rotated": false,
+			"spriteSourceSize": {
+				"h": 64,
+				"w": 64,
+				"x": 0,
+				"y": 0
+			},
+			"sourceSize": {
+				"h": 64,
+				"w": 64
+			},
+			"trimmed": false
+		}
+	},
+	"meta": {
+		"image": "scanner.png"
+	}
+}

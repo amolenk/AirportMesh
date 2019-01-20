@@ -1,305 +1,396 @@
 import './styles/site.css'
-const SuitcaseImage = require('./assets/suitcase.png')
 const BorderImage = require('./assets/border.png')
 const ScannerImage = require('./assets/scanner.png')
-const AirportMapImage = require('./assets/airport-map.png')
+const ScannerImageMetadata = require('./assets/scanner.json')
+const ScannerPushImage = require('./assets/scanner-push.png')
+const LuggageImage = require('./assets/luggage.png')
+const LuggageImageMetadata = require('./assets/luggage.json')
+const TravellerImage = require('./assets/traveller.png')
+const TravellerImageMetadata = require('./assets/traveller.json')
+const ExplosionImage = require('./assets/explosion.png')
+const ExplosionImageMetadata = require('./assets/explosion.json')
+const CheckInBackgroundImage = require('./assets/checkin-background.png')
+const SortBackgroundImage = require('./assets/sort-background.png')
+const ScanBackgroundImage = require('./assets/scan-background.png')
+const ScannerBeamImage = require('./assets/scanner-beam.png')
+const ScannerBeamImageMetadata = require('./assets/scanner-beam.json')
 
-var game = new Phaser.Game(800, 672, Phaser.AUTO, 'test', null, true, false);
+var game = new Phaser.Game(896, 640, Phaser.AUTO, 'test', null, true, false);
+
+var cursors;
+
+var walkingSpeed = 200;
+var luggageSpeed = 200;
 
 var BasicGame = function (game) { };
 
 BasicGame.Boot = function (game) { };
 
-var isoGroup, overlapGroup, player, suitcases;
+var luggageBehaviour, travellerBehaviour;
+var luggageGroup, travellerGroup;
+var scanners = [];
 
-var tileMap = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0],
-    [0, 0, 1, 0, 0, 2, 0, 0, 0, 1, 0, 0, 1, 0],
-    [0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0],
-  ];
+function LuggageBehaviour() {
+    this.update = function(luggage, gameContext) {
+        if (!luggage.behaviour) {
+            luggage.behaviour = {
+                "state": "unsorted"
+            };
+        }
 
-function SuitcaseBehaviour(suitcaseSprite) {
+        if (luggage.behaviour.state == "checkedIn") {
+            if (luggage.body.y <= 208) {
+                luggage.body.velocity.y = 0;
+                luggage.behaviour.state = "unsorted";
+            } else {
+                luggage.body.velocity.y = -luggageSpeed;
+            }
+        }        
 
-    const STATUS_NEW = 0;
-    const STATUS_ROUTING = 1;
-    const STATUS_ROUTED = 2;
-
-    this.status = STATUS_NEW;
-    this.processArea = 0;
-
-    this.update = function() {
-
-        if (this.status == STATUS_NEW) {
-
-            //suitcaseSprite.body.velocity.y = 100;
-
-            // if (suitcaseSprite.body.velocity.y == 0) {
-            //     console.log('stopped'); 
-            // }
-
-//            console.log(suitcaseSprite.body.y);
-
-            if (suitcaseSprite.body.hitTest(400, 146))
-            {
-                this.status = STATUS_ROUTING;
-
-                suitcaseSprite.body.velocity.y = 0;
-                suitcaseSprite.body.immovable = true;
-
-                setTimeout(() => {
-                    this.processArea = game.rnd.integerInRange(1, 2);
-                }, 10);
+        if (luggage.behaviour.state == "unsorted") {
+            if (luggage.body.x >= 1221) {
+                luggage.behaviour.state = "readyForSorting";
+            } else {
+                luggage.body.velocity.x = luggageSpeed;
             }
         }
-        else if (this.status == STATUS_ROUTING) {
 
+        if (luggage.behaviour.state == "readyForSorting") {
+            luggage.body.velocity.x = 0;
+            luggage.behaviour.state = "sorting";
 
+            // Simulate callback
+            setTimeout(() => {
+                var result = game.rnd.integerInRange(1, 2);
+                if (result == 1) {
+                    luggage.body.velocity.x = luggageSpeed;
+                    luggage.behaviour.belt = 0;
+                } else {
+                    luggage.body.velocity.y = luggageSpeed;
+                    luggage.behaviour.belt = 1;
+                }
+                luggage.behaviour.state = "sorted";
+            }, 1);
 
+            return;
+        }
 
-            if (this.processArea != 0) {
-                this.status = STATUS_ROUTED;
-                suitcaseSprite.body.immovable = false;
-                suitcaseSprite.body.velocity.x = (this.processArea == 1 ? 100 : -100);
-                //suitcaseSprite.body.velocity.y = 100;    
+        if (luggage.behaviour.state == "sorted") {
+            if (luggage.body.velocity.y > 0
+                && luggage.body.y >= 388) {
+                luggage.body.velocity.x = luggageSpeed;
+                luggage.body.velocity.y = 0;
+            }
+
+            if ((luggage.body.x > 2120 && luggage.body.y < 350)
+                || (luggage.body.x > 1928 && luggage.body.y > 350)) {
+                luggage.behaviour.state = "readyForScanning";
             }
         }
-            // else if (suitcase.body.velocity.x != 0 && suitcase.body.x > 200)
-            // {
-            //     suitcase.body.velocity.x = 0;
-            // }
 
-            // game.physics.isoArcade.overlap(suitcase, this.scanner, function(e){
-            // });
+        if (luggage.behaviour.state == "readyForScanning") {
+            luggage.body.velocity.x = 0;
+            luggage.behaviour.state = "scanning";
 
-            if (suitcaseSprite.body.hitTest(550, 150))
-            {
-                suitcaseSprite.body.velocity.x = 0;
-                suitcaseSprite.body.velocity.y = 100; 
+            // Simulate callback
+            setTimeout(() => {
+                var scanner = scanners[luggage.behaviour.belt];
+
+                var result = game.rnd.integerInRange(1, 2);
+                var setLedToOk = (result == 2);
+
+                if (result == 1) {
+                    luggage.body.velocity.x = luggageSpeed;
+                    luggage.behaviour.state = "approved";
+                    scanner.setLedColor(setLedToOk);
+                } else {
+
+                    var force = 1;
+
+                    var scanner = scanners[luggage.behaviour.belt];
+                    scanner.setLedColor(setLedToOk);
+                    scanner.divertLuggage(1000 - (force * 250));
+
+                    luggage.body.velocity.y = -force * luggageSpeed;
+
+                    if (force < 3) {
+                        var fadeTween = game.add.tween(luggage).to( { alpha: 0 }, 500 - (force * 200), Phaser.Easing.Linear.None, true);
+                        fadeTween.onComplete.add(() => {
+                            luggage.destroy();
+                        });
+                    }
+
+                    luggage.behaviour.state = "diverted";
+                }
+            }, 100);
+        }
+
+        if (luggage.behaviour.state == "diverted") {
+            if (luggage.body.y < 80) {
+                luggage.behaviour.state = "hitWall";
             }
+        }
+
+        if (luggage.behaviour.state == "hitWall") {
+            if (!luggage.behaviour.explosionAnimation) {
+                luggage.body.velocity.y = 0;
+                luggage.behaviour.explosionAnimation = luggage.animations.play('explode');
+            } else {
+                if (!luggage.behaviour.explosionAnimation.isPlaying) {
+                    luggage.destroy();
+                }
+            }
+        }
     }
 }
 
+function TravellerBehaviour() {
+    this.update = function(traveller, gameContext) {
+        
+        if (traveller.behaviour.state == "nextInLine") {
+            if (traveller.body.y <= 360) {
+                traveller.behaviour.state = "checkingIn";
+            } else {
+                traveller.body.velocity.y = -walkingSpeed;
+            }
+        }
+
+        if (traveller.behaviour.state == "checkingIn") {
+
+            traveller.animations.stop();
+            traveller.frame = 1;
+            traveller.body.velocity.y = 0;
+            traveller.behaviour.state = "waitingForBackendSystem";
+
+            var luggage = gameContext.addLuggage(traveller.behaviour.lane,
+                traveller.body.x - 10, traveller.body.y, { "state": "checkingIn" });
+            traveller.behaviour.luggage = luggage;
+
+            // Simulate callback
+            setTimeout(() => {
+                //var result = game.rnd.integerInRange(1, 2);
+                // if (result == 1) {
+                //     traveller.body.velocity.x = luggageSpeed;
+                // } else {
+                //     traveller.body.velocity.y = luggageSpeed;
+                // }
+                traveller.behaviour.state = "checkedIn";
+            }, 1500);
+        }
+
+        if (traveller.behaviour.state == "checkedIn") {
+
+            traveller.behaviour.state = "walkingToGate";
+
+            traveller.animations.play('walkLeft');
+            traveller.body.velocity.x = -walkingSpeed;
+
+            traveller.behaviour.luggage.behaviour.state = "checkedIn";
+            traveller.behaviour.luggage = null;
+
+            gameContext.addTraveller(traveller.behaviour.lane);
+        }
+
+        if (traveller.behaviour.state == "walkingToGate") {
+
+            if (traveller.body.x < -32) {
+                traveller.destroy();
+            }
+        }
+    }
+}
+
+function Scanner(scannerSprite, diverterSprite) {
+
+    this.divertLuggage = function(force) {
+
+        if (this.divertLuggageTween == null) {
+            this.divertLuggageTween = game.add.tween(diverterSprite);
+            this.divertLuggageTween.from({ y: scannerSprite.y - 32 }, force, Phaser.Easing.Linear.In, false);
+            this.divertLuggageTween.onComplete.add(() => {
+                this.divertLuggageTween = null;
+            });
+            this.divertLuggageTween.start();
+        }
+    }
+
+    this.setLedColor = function(ok) {
+        scannerSprite.frame = ok ? 1 : 2;
+    }
+}
 
 BasicGame.Boot.prototype =
 {
+    divertLuggageTween: null,
+
     preload: function () {
+
+        // ? Particle storm
+        game.forceSingleUpdate = true;
 
         // Load assets.
         game.load.image('border', BorderImage);
-        game.load.image('suitcase', SuitcaseImage);
         game.load.image('scanner', ScannerImage);
-        game.load.image('airport-map', AirportMapImage);
+        game.load.image('scanner-push', ScannerPushImage);
+        game.load.image('check-in-background', CheckInBackgroundImage);
+        game.load.image('sort-background', SortBackgroundImage);
+        game.load.image('scan-background', ScanBackgroundImage);
+        game.load.atlas("luggage", LuggageImage, null, LuggageImageMetadata);
+        game.load.atlas('scanner', ScannerImage, null, ScannerImageMetadata);
+        game.load.atlas('scanner-beam', ScannerBeamImage, null, ScannerBeamImageMetadata);
+        game.load.atlas("traveller", TravellerImage, null, TravellerImageMetadata);
+        game.load.atlas("explosion", ExplosionImage, null, ExplosionImageMetadata);
 
-//        game.debug.renderShadow = false;
-//        game.stage.disableVisibilityChange = true;
-//        game.time.advancedTiming = true;
-
-        // Add and enable the plug-in.
-//        game.plugins.add(new Phaser.Plugin.Isometric(game));
-
-//        game.world.setBounds(0, 0, 1024, 768);
-
-        // Start the IsoArcade physics system.
-//        game.physics.startSystem(Phaser.Plugin.Isometric.ISOARCADE);
-
-        // Center the world on the screen.
-//        game.iso.anchor.setTo(0.5, 0.2);
-
-        suitcases = [];                
+        game.time.advancedTiming = true;
     },
     create: function () {
 
+        luggageBehaviour = new LuggageBehaviour();
+        travellerBehaviour = new TravellerBehaviour();
+
+        cursors = game.input.keyboard.createCursorKeys();
+
         game.physics.startSystem(Phaser.Physics.ARCADE);
 
-        game.world.setBounds(0, 0, 800, 672);
+        game.world.setBounds(0, 0, 2688, 640);
 
-        game.add.sprite(0, 0, 'airport-map');
-
-
-
-        // Create a group for our tiles, so we can use Group.sort
-        isoGroup = game.add.group();
-//        overlapGroup = game.add.group();
-
-        var wall = game.add.sprite(100, 150 , '', 0, isoGroup);
-        wall.width = 600; 
-        game.physics.arcade.enable(wall);
-        //wall.body.width = 600;
-        wall.body.immovable = true;
-        wall.collideWorldBounds = true;
-        //pausePlatform.allowGravity = false;
+        game.add.sprite(0, 0, 'check-in-background');
+        game.add.sprite(896, 0, 'sort-background');
+        game.add.sprite(1792, 0, 'scan-background');
 
 
-        // isoGroup.enableBody = true;
-        // isoGroup.physicsBodyType = Phaser.Plugin.Isometric.ISOARCADE;
+        luggageGroup = game.add.group();
+        travellerGroup = game.add.group();
 
-        // Set the global gravity for IsoArcade.
-//        game.physics.isoArcade.gravity.setTo(0, 0, -500);
+        this.luggageDiverter = game.add.sprite(2122, 256, 'scanner-push');
 
-        // for (var xx = 0; xx < 256; xx += 38) {
-        //     this.addSprite(xx, 0, 0, 'cube');
-        // }
+        scanners.push(this.addScanner(2112, 256));
+        scanners.push(this.addScanner(1920, 448));
 
-        // for (var yy = 0; yy < 360; yy += 35) {
-        //     this.addSprite(0, yy, 0, 'cube');
-        // }
-
-        // this.addSprite(124, 200, 0, 'border');
-        // this.addSprite(200, 200, 0, 'cube');
-        // this.addSprite(238, 200, 0, 'border');
-
-        // Let's make a load of cubes on a grid, but do it back-to-front so they get added out of order.
-        // var cube;
-        // for (var xx = 256; xx > 0; xx -= 74) {
-        //     for (var yy = 300; yy > 0; yy -= 40) {
-        //         // Create a cube using the new game.add.isoSprite factory method at the specified position.
-        //         // The last parameter is the group you want to add it to (just like game.add.sprite)
-        //         cube = game.add.isoSprite(xx, yy, 0, 'border', 0, isoGroup);
-        //         cube.anchor.set(0.5, 0);                
-
-        //         // Enable the physics body on this cube.
-        //         game.physics.isoArcade.enable(cube);
-
-        //         // Collide with the world bounds so it doesn't go falling forever or fly off the screen!
-        //         cube.body.collideWorldBounds = true;
-        //         cube.body.immovable = true;
-
-        //         // Add a full bounce on the x and y axes, and a bit on the z axis. 
-        //         cube.body.bounce.set(1, 1, 0.2);
-
-        //         // Add some X and Y drag to make cubes slow down after being pushed.
-        //         cube.body.drag.set(100, 100, 0);
-        //     }
-        // }
-
-//        this.spawnTiles();
-        this.addSuitcase();
-
-        // this.scanner = game.add.isoSprite(128, 256, 0, 'cube', 0, overlapGroup);
-        // this.scanner.tint = 0x222222;
-        // this.scanner.anchor.set(0.5);
-        // game.physics.isoArcade.enable(this.scanner);
-        // this.scanner.body.collideWorldBounds = true;
-        // this.scanner.alpha = 0.5;
-
-        // var block = game.add.isoSprite(128, 296, 0, 'border', 0, isoGroup);
-        // block.tint = 0xFF0000;
-        // block.anchor.set(0.5);
-        // game.physics.isoArcade.enable(block);
-        // block.body.collideWorldBounds = true;
-        // block.body.immovable = true;
-        // block.alpha = 0.5;
+        // Add a scanning effect to the scanners.
+        var scannerBeam = game.add.sprite(2112, 192, 'scanner-beam');
+        scannerBeam.animations.add('scan', Phaser.Animation.generateFrameNames(
+            './scanner-beam-', 1, 3), 6, true);
+        scannerBeam.animations.play('scan');
 
         //  Create our Timer
-//        var timer = game.time.create(false);
-//        timer.loop(1500, () => {
+        var timer = game.time.create(false);
+        timer.loop(500, () => {
            //this.addSuitcase();
-//        }, this);
-//        timer.start();
-
-        // Set up our controls.
-//        this.cursors = game.input.keyboard.createCursorKeys();
-
-//        this.game.input.keyboard.addKeyCapture([
-//            Phaser.Keyboard.LEFT,
-//            Phaser.Keyboard.RIGHT,
-//            Phaser.Keyboard.UP,
-//            Phaser.Keyboard.DOWN,
-//            Phaser.Keyboard.SPACEBAR
-//        ]);
-
-        var space = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-
-        space.onDown.add(function () {
-             this.addSuitcase();
-        //     //player.body.velocity.z = 300;
         }, this);
+        timer.start();
+
+        var self = this;
+        this.addTraveller(1);
+        setTimeout(() => this.addTraveller(2), 500);
+        setTimeout(() => this.addTraveller(0), 1000);
+
+        var downKey = game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
+        var upKey = game.input.keyboard.addKey(Phaser.Keyboard.UP);
+
+        game.camera.x = 1680;
+
+        downKey.onDown.add(() => {
+            this.addExtraLuggage(game.camera.x, 215, true).body.velocity.x = luggageSpeed; });
+
+        upKey.onUp.add(() => {
+            this.addExtraLuggage(game.camera.x, 215, false).body.velocity.x = luggageSpeed; });
     },
     update: function () {
-        // Move the player at this speed.
-        var speed = 100;
 
-        // if (this.cursors.up.isDown) {
-        //     player.body.velocity.y = -speed;
-        // }
-        // else if (this.cursors.down.isDown) {
-        //     player.body.velocity.y = speed;
-        // }
-        // else {
-        //     player.body.velocity.y = 0;
-        // }
-
-        // if (this.cursors.left.isDown) {
-        //     player.body.velocity.x = -speed;
-        // }
-        // else if (this.cursors.right.isDown) {
-        //     player.body.velocity.x = speed;
-        // }
-        // else {
-        //     player.body.velocity.x = 0;
-        // }
-
-        // Our collision and sorting code again.
-        game.physics.arcade.collide(isoGroup);
-        //game.iso.topologicalSort(isoGroup);
-
-        suitcases.forEach(function (suitcase) {
-            suitcase.update();
-        });
-                //isoGroup.forEach(function (tile) {
-//            game.debug.body(tile, 'rgba(189, 221, 235, 0.6)', false);
-        //});
-
-        for (var suitcase of suitcases)
+        if (cursors.left.isDown)
         {
-            suitcase.update();
+            game.camera.x -= 16;
+        }
+        else if (cursors.right.isDown)
+        {
+            game.camera.x += 16;
         }
 
+        var gameContext = this;
+
+        travellerGroup.forEach(function (traveller) {
+            travellerBehaviour.update(traveller, gameContext);
+        });
+
+        luggageGroup.forEach(function (luggage) {
+            luggageBehaviour.update(luggage, gameContext);
+        });
     },
     render: function () {
-        //isoGroup.forEach(function (tile) {
-//            game.debug.body(tile, 'rgba(189, 221, 235, 0.6)', false);
-        //});
-        game.debug.text(game.time.fps || '--', 2, 14, "#a7aebe");
+//        game.debug.text(game.time.fps || '--', 2, 14, "#a7aebe");
+//        game.debug.cameraInfo(game.camera, 32, 32);
     },
-    addSprite: function (x, y, z, name) {
+    addScanner: function(x, y) {
 
-        var sprite = game.add.isoSprite(x, y, z, name, 0, isoGroup);
-        sprite.anchor.set(0.5, 0);
-        game.physics.isoArcade.enable(sprite);
-        sprite.body.collideWorldBounds = true;
+        var diverterSprite = game.add.sprite(x + 10, y, 'scanner-push');
+        var scannerSprite = game.add.sprite(x, y, 'scanner');
 
-        return sprite;
-    },
-    addSuitcase: function() {
-        // 50, 200
-        var suitcase = game.add.sprite(400, 0, 'suitcase', 0, isoGroup);
-        suitcase.anchor.set(0.5, 0);
-        game.physics.arcade.enable(suitcase);
-//        suitcase.body.collideWorldBounds = true;
-        suitcase.body.velocity.y = 100; 
-        suitcase.body.bounce.set(0.2);
+        // Add a scanning effect to the scanners.
+        var scannerBeam = game.add.sprite(x, y - 64, 'scanner-beam');
+        scannerBeam.animations.add('scan', Phaser.Animation.generateFrameNames(
+            './scanner-beam-', 1, 3), 6, true);
+        scannerBeam.animations.play('scan');
 
-        suitcases.push(new SuitcaseBehaviour(suitcase));
+        return new Scanner(scannerSprite, diverterSprite);
+
     },
-    callService : async function() {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+    addTraveller: function(lane) {
+
+        var traveller = travellerGroup.create(128 + (lane * 256), 640, 'traveller');
+        traveller.anchor.set(0.5, 0.5);
+        game.physics.arcade.enable(traveller);
+        traveller.body.immovable = true;
+
+        traveller.animations.add('walkUp', Phaser.Animation.generateFrameNames(
+            './traveller-behind-', 1, 3), 8, true);
+        traveller.animations.add('walkLeft', Phaser.Animation.generateFrameNames(
+            './traveller-left-', 1, 3), 8, true);
+
+        traveller.animations.play('walkUp');
+    
+        traveller.behaviour = {
+            "state": "nextInLine",
+            "lane": lane
+        };
+
+        return traveller;
     },
-    spawnTiles: function (group) {
-        for (var y = 0; y < tileMap.length; y++) {
-            for (var x = 0; x < tileMap[y].length; x++) {
-                if (tileMap[y][x] == 1) {
-                    var tile = this.addSprite(x * 38, y * 40, 0, 'cube');
-                    tile.anchor.set(0.5, 0);
-//                    tile.smoothed = false;
-//                    tile.body.immovable = false;
-                }
-                console.log(x + " - " + y);
-            }
+    addLuggage: function(lane, x, y, behaviour) {
+
+        var luggage = luggageGroup.create(x ? x : 0, y ? y : 216, 'luggage');
+        luggage.anchor.set(0.5, 0.5);
+        luggage.frame = lane ? lane : 0;
+        game.physics.arcade.enable(luggage);
+
+        luggage.animations.add('explode', Phaser.Animation.generateFrameNames(
+            './explosion-', 1, 5), 12, false);
+
+        luggage.behaviour = behaviour;
+
+        return luggage;
+    },
+    addExtraLuggage: function(x, y, suspicious) {
+
+        var behaviour;
+        if (game.camera.x >= 1221) {
+            behaviour = { "state": "sorted", "belt": 0 };
+        } else {
+            behaviour = { "state": "unsorted" };
         }
+
+        if (suspicious) {
+            behaviour.suspicious = true;
+        }
+
+        var luggage = this.addLuggage(0, x, y, behaviour);
+        luggage.frame = 3;
+
+        if (suspicious) {
+            luggage.tint = 0xFF5555;
+        }
+
+        return luggage;
     }
 };
 

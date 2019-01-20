@@ -1,0 +1,162 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location of the resources (e.g. westus, eastus, westeurope)."
+      }
+    },
+    "registry-server": {
+      "type": "string",
+      "metadata": {
+        "description": "Private image registry server. For example, <myacr>.azurecr.io"
+      }
+    },
+    "registry-username": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the private image registry server. For Azure Container Registry the CLI command 'az acr credential show --name <myacr> --query \"username\"' will show the username."
+      }
+    },
+    "registry-password": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the private image registry server. For Azure Container Registry the CLI command 'az acr credential show --name <myacr> --query \"passwords[0].value\"' will show the password."
+      }
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2018-09-01-preview",
+      "name": "airportMeshRegistryPassword",
+      "type": "Microsoft.ServiceFabricMesh/secrets",
+      "location": "[parameters('location')]",
+      "dependsOn": [],
+      "properties": {
+        "kind": "inlinedValue",
+        "contentType": "text/plain",
+        "description": "Azure container registry password."
+      }
+    },
+    {
+      "apiVersion": "2018-09-01-preview",
+      "name": "airportMeshRegistryPassword/v1",
+      "type": "Microsoft.ServiceFabricMesh/secrets/values",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "Microsoft.ServiceFabricMesh/secrets/airportMeshRegistryPassword"
+      ],
+      "properties": {
+        "value": "[parameters('registry-password')]"
+      }
+    },
+    {
+      "apiVersion": "2018-09-01-preview",
+      "name": "airportMeshNetwork",
+      "type": "Microsoft.ServiceFabricMesh/networks",
+      "location": "[parameters('location')]",
+      "dependsOn": [],
+      "properties": {
+        "kind": "Local",
+        "description": "Service Fabric Mesh Network for Airport Mesh demo.",
+        "networkAddressPrefix": "10.0.0.0/24"
+      }
+    },
+    {
+      "apiVersion": "2018-09-01-preview",
+      "name": "airportMeshGateway",
+      "type": "Microsoft.ServiceFabricMesh/gateways",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "Microsoft.ServiceFabricMesh/networks/airportMeshNetwork"
+      ],
+      "properties": {
+        "description": "Service Fabric Mesh Gateway for Airport Mesh demo.",
+        "sourceNetwork": {
+          "name": "Open"
+        },
+        "destinationNetwork": {
+          "name": "[resourceId('Microsoft.ServiceFabricMesh/networks', 'airportMeshNetwork')]"
+        },
+        "tcp": [
+          {
+            "name": "web",
+            "port": 80,
+            "destination": {
+              "applicationName": "airportMeshApp",
+              "serviceName": "checkInService",
+              "endpointName": "checkInServiceListener"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2018-09-01-preview",
+      "name": "airportMeshApp",
+      "type": "Microsoft.ServiceFabricMesh/applications",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "Microsoft.ServiceFabricMesh/networks/airportMeshNetwork",
+        "Microsoft.ServiceFabricMesh/secrets/airportMeshRegistryPassword/values/v1"
+      ],
+      "properties": {
+        "description": "Service Fabric Mesh Airport Mesh demo.",
+        "services": [
+          {
+            "type": "Microsoft.ServiceFabricMesh/services",
+            "location": "[parameters('location')]",
+            "name": "checkInService",
+            "properties": {
+              "description": "Check-in Service for Airport Mesh demo.",
+              "osType": "linux",
+              "codePackages": [
+                {
+                  "name": "checkInServiceCode",
+                  "image": "[concat(parameters('registry-server'), '/airport-mesh/check-in-service:1.2')]",
+                  "imageRegistryCredential": {
+                    "server": "[parameters('registry-server')]",
+                    "username": "[parameters('registry-username')]",
+                    "password": "[resourceId('Microsoft.ServiceFabricMesh/secrets/values','airportMeshRegistryPassword','v1')]"
+                  },
+                  "endpoints": [
+                    {
+                      "name": "checkInServiceListener",
+                      "port": "80"
+                    }
+                  ],
+                  "resources": {
+                    "requests": {
+                      "cpu": "1",
+                      "memoryInGB": "1"
+                    }
+                  }
+                }
+              ],
+              "replicaCount": "3",
+              "networkRefs": [
+                {
+                  "name": "[resourceId('Microsoft.ServiceFabricMesh/networks', 'airportMeshNetwork')]",
+                  "endpointRefs": [
+                    {
+                      "name": "checkInServiceListener"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "publicIPAddress": {
+      "value": "[reference('airportMeshGateway').ipAddress]",
+      "type": "string"
+    }
+  }
+}
