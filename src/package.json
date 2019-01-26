@@ -8,6 +8,7 @@
   },
   "private": true,
   "dependencies": {
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@types/webpack-env": "^1.13.6",

@@ -256,7 +256,7 @@
                   }
                 }
               ],
-              "replicaCount": "1",
+              "replicaCount": "3",
               "networkRefs": [
                 {
                   "name": "[resourceId('Microsoft.ServiceFabricMesh/networks', 'airportMeshNetwork')]"

@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using ScanService.Models;
 
 namespace ScanService.Controllers
 {
@@ -11,24 +13,25 @@ namespace ScanService.Controllers
     public class ScanController : ControllerBase
     {
         [HttpGet]
-        public async Task<ActionResult<bool>> Get([FromQuery] string imageData)
+        public ActionResult<ScanOTronInstructions> Get([FromQuery] string xRayData)
         {
             // This ultra-sophisticated AI algorithm can detect contraband/illegal
             // items in scanned x-ray images of baggage.
 
-            // We need some image data to operate on.
-            if (string.IsNullOrWhiteSpace(imageData))
+            // We need some x-ray data to operate on.
+            if (string.IsNullOrWhiteSpace(xRayData))
             {
                 return BadRequest();
             }
 
-            // Sophisticated algorithms can take a lot of time, let's wait a
-            // little while.
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            // If we get a positive result, divert the luggage for further inspection.
+            var positiveResult = XRayDataAnalyzer.Analyze(xRayData);
+            if (positiveResult)
+            {
+                return new ScanOTronInstructions(true, DivertSetting.LittleNudge);
+            }
 
-            // Base the result on whether or not we find something iffy in the
-            // image data.
-            return imageData.Contains("[something_iffy]");
+            return new ScanOTronInstructions(false, DivertSetting.None);
         }
     }
 }

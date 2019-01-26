@@ -1,0 +1,29 @@
+version: '3.4'
+
+# Visual Studio Code doesn't look at the compose.override.yml file (https://github.com/Microsoft/vscode-docker/issues/379).
+# For now, set all debug environment settings here.
+
+services:
+  airportmesh.checkin:
+    image: amolenk.azurecr.io/airport-mesh/check-in-service:latest
+    build: CheckInService
+    ports:
+      - "5000:80"
+
+  airportmesh.homelandsecurity:
+    image: amolenk.azurecr.io/airport-mesh/homeland-security-service:latest
+    build: HomelandSecurityService
+
+  airportmesh.scan:
+    image: amolenk.azurecr.io/airport-mesh/scan-service:latest
+    build: ScanService
+    ports:
+      - "5001:80"
+
+  airportmesh.sort:
+    image: amolenk.azurecr.io/airport-mesh/sort-service:latest
+    build: SortService
+    ports:
+      - "5002:80"
+    volumes:
+      - "~/SortOTron:/app/data"

@@ -162,12 +162,59 @@
                       "path": {
                         "value": "/api/scan",
                         "type": "Prefix"
-                      }
+                      },
+                      "headers": [
+                        {
+                          "name": "Access-Control-Request-Headers",
+                          "value": "x-process-area",
+                          "type": "Exact"
+                        }
+                      ]
                     },
                     "destination": {
                       "applicationName": "airportMeshApp",
                       "serviceName": "scanService",
                       "endpointName": "scanServiceListener"
+                    }
+                  },
+                  {
+                    "match": {
+                      "path": {
+                        "value": "/api/scan",
+                        "type": "Prefix"
+                      },
+                      "headers": [
+                        {
+                          "name": "x-process-area",
+                          "value": "0",
+                          "type": "Exact"
+                        }
+                      ]
+                    },
+                    "destination": {
+                      "applicationName": "airportMeshApp",
+                      "serviceName": "scanService",
+                      "endpointName": "scanServiceListener"
+                    }
+                  },
+                  {
+                    "match": {
+                      "path": {
+                        "value": "/api/scan",
+                        "type": "Prefix"
+                      },
+                      "headers": [
+                        {
+                          "name": "x-process-area",
+                          "value": "1",
+                          "type": "Exact"
+                        }
+                      ]
+                    },
+                    "destination": {
+                      "applicationName": "airportMeshApp",
+                      "serviceName": "scanServiceVNext",
+                      "endpointName": "scanServiceVNextListener"
                     }
                   }
                 ]
@@ -256,7 +303,7 @@
                   }
                 }
               ],
-              "replicaCount": "1",
+              "replicaCount": "3",
               "networkRefs": [
                 {
                   "name": "[resourceId('Microsoft.ServiceFabricMesh/networks', 'airportMeshNetwork')]"
@@ -350,6 +397,49 @@
                   "endpointRefs": [
                     {
                       "name": "scanServiceListener"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "type": "Microsoft.ServiceFabricMesh/services",
+            "location": "[parameters('location')]",
+            "name": "scanServiceVNext",
+            "properties": {
+              "description": "Scan Service for Airport Mesh demo.",
+              "osType": "linux",
+              "codePackages": [
+                {
+                  "name": "scanServiceVNextCode",
+                  "image": "[concat(parameters('registry-server'), '/airport-mesh/scan-service:0.8')]",
+                  "imageRegistryCredential": {
+                    "server": "[parameters('registry-server')]",
+                    "username": "[parameters('registry-username')]",
+                    "password": "[resourceId('Microsoft.ServiceFabricMesh/secrets/values','airportMeshRegistryPassword','v1')]"
+                  },
+                  "endpoints": [
+                    {
+                      "name": "scanServiceVNextListener",
+                      "port": "80"
+                    }
+                  ],
+                  "resources": {
+                    "requests": {
+                      "cpu": "1",
+                      "memoryInGB": "1"
+                    }
+                  }
+                }
+              ],
+              "replicaCount": "1",
+              "networkRefs": [
+                {
+                  "name": "[resourceId('Microsoft.ServiceFabricMesh/networks', 'airportMeshNetwork')]",
+                  "endpointRefs": [
+                    {
+                      "name": "scanServiceVNextListener"
                     }
                   ]
                 }

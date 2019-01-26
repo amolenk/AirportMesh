@@ -16,7 +16,7 @@
             "stopAtEntry": false,
             "internalConsoleOptions": "openOnSessionStart",
             "launchBrowser": {
-                "enabled": true,
+                "enabled": false,
                 "args": "${auto-detect-url}",
                 "windows": {
                     "command": "cmd.exe",
@@ -49,7 +49,7 @@
             "stopAtEntry": false,
             "internalConsoleOptions": "openOnSessionStart",
             "launchBrowser": {
-                "enabled": true,
+                "enabled": false,
                 "args": "${auto-detect-url}",
                 "windows": {
                     "command": "cmd.exe",
@@ -104,14 +104,14 @@
             }
         },
         {
-            "name": ".NET Core Launch (Test)",
+            "name": ".NET Core Launch (HomelandSecurityService)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/src/Test/bin/Debug/netcoreapp2.2/Test.dll",
+            "program": "${workspaceFolder}/src/HomelandSecurityService/bin/Debug/netcoreapp2.2/HomelandSecurityService.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/src/Test",
+            "cwd": "${workspaceFolder}/src/HomelandSecurityService",
             "stopAtEntry": false,
             "console": "externalTerminal"
         },

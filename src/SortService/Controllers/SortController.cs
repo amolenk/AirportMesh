@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace SortService.Controllers
 {
@@ -11,49 +13,31 @@ namespace SortService.Controllers
     [ApiController]
     public class SortController : ControllerBase
     {
-        // TODO Wrap all throttling stuff in an action attribute
-        // https://stackoverflow.com/questions/29550995/returning-429-too-many-requests-from-action-attribute
-
-        private static readonly TimeSpan WindowSize = TimeSpan.FromSeconds(2);
-        private const int MaxRequestsPerWindow = 1;
-
-        private static int RequestCountInWindow = 0;
-        private static DateTime WindowStart = DateTime.MinValue;
-
-        private static readonly object Lock = new object();
+        private const string InstructionsPath = "data/sort-instructions.json";
 
         [HttpGet("{flightNumber}")]
         public async Task<ActionResult<int>> Get(string flightNumber)
         {
-            lock (Lock)
-            {
-                // Start a new window if this is the very first call, or the
-                // previous window has passed
-                if (WindowStart == DateTime.MinValue
-                    || WindowStart + WindowSize < DateTime.Now)
-                {
-                    WindowStart = DateTime.Now;
-                    RequestCountInWindow = 0;
-                }
+            // Get the airline code from the flight number.
+            var airline = flightNumber.Substring(0, 2);
 
-                // Check if there's room for the current request in this window.
-                if (RequestCountInWindow < MaxRequestsPerWindow)
-                {
-                    RequestCountInWindow += 1;
-                }
-                else
-                {
-                    return StatusCode((int)HttpStatusCode.TooManyRequests);
-                }
+            // Load the instructions for the sorting machine from disk.
+            var instructions = await LoadSortingMachineInstructionsAsync();
+
+            // Default to conveyor belt 0 if the airline isn't mapped.
+            return instructions.ContainsKey(airline) ? instructions[airline] : 0;
+        }
+
+        private async Task<Dictionary<string, int>> LoadSortingMachineInstructionsAsync()
+        {
+            if (System.IO.File.Exists(InstructionsPath))
+            {
+                var json = await System.IO.File.ReadAllTextAsync(InstructionsPath);
+
+                return JsonConvert.DeserializeObject<Dictionary<string, int>>(json);
             }
 
-            // Sorting seems like it could be hard work. Add some extra delay
-            // to make the service seem more important. Also helps in demo-ing
-            // scale-out scenarios ;-)
-            await Task.Delay(1);
-
-            // TODO Get this from a configuration file instead.
-            return new Random().Next(1, 3);
+            return new Dictionary<string, int>();
         }
     }
 }
