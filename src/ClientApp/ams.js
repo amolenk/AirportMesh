@@ -1,15 +1,18 @@
 function AirportManagementSystem() {
 
-    // Local
-    // this.checkInServiceAddress = 'http://localhost:5000/api';
-    // this.scanServiceAddress = 'http://localhost:5001/api';
-    // this.sortServiceAddress = 'http://localhost:5002/api';
-
-    // Mesh
-    this.meshIpAddress = "51.144.231.229";
-    this.checkInServiceAddress = 'http://' + this.meshIpAddress + '/api';
-    this.scanServiceAddress = 'http://' + this.meshIpAddress + '/api';
-    this.sortServiceAddress = 'http://' + this.meshIpAddress + '/api';
+    if (process.env.NODE_ENV == 'development') {
+        console.log('Using local endpoints');
+        this.checkInServiceAddress = 'http://localhost:5000/api';
+        this.scanServiceAddress = 'http://localhost:5001/api';
+        this.sortServiceAddress = 'http://localhost:5002/api';
+    } else {
+        // Mesh
+        console.log('Using Service Fabric Mesh endpoints');
+        var meshIpAddress = process.env.AIRPORTMESH_MESH_IP;
+        this.checkInServiceAddress = 'http://' + meshIpAddress + '/api';
+        this.scanServiceAddress = 'http://' + meshIpAddress + '/api';
+        this.sortServiceAddress = 'http://' + meshIpAddress + '/api';
+    }
 
     this.sortLuggage = function (airlineCode) {
 
@@ -42,8 +45,8 @@ function AirportManagementSystem() {
 
         return fetch(this.checkInServiceAddress + '/passport/' + passportNumber)
         .then(function (response) {
-            return response.status == 200 ? "Ok" : "Busy";
-        });
+            return response.text();
+        })
     }
 }
 

@@ -9,24 +9,6 @@
         "description": "Location of the resources (e.g. westus, eastus, westeurope)."
       }
     },
-    "registry-server": {
-      "type": "string",
-      "metadata": {
-        "description": "Private image registry server. For example, <myacr>.azurecr.io"
-      }
-    },
-    "registry-username": {
-      "type": "string",
-      "metadata": {
-        "description": "User name for the private image registry server. For Azure Container Registry the CLI command 'az acr credential show --name <myacr> --query \"username\"' will show the username."
-      }
-    },
-    "registry-password": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the private image registry server. For Azure Container Registry the CLI command 'az acr credential show --name <myacr> --query \"passwords[0].value\"' will show the password."
-      }
-    },
     "fileShareName": {
       "type": "string",
       "metadata": {
@@ -47,30 +29,6 @@
     }
   },
   "resources": [
-    {
-      "apiVersion": "2018-09-01-preview",
-      "name": "airportMeshRegistryPassword",
-      "type": "Microsoft.ServiceFabricMesh/secrets",
-      "location": "[parameters('location')]",
-      "dependsOn": [],
-      "properties": {
-        "kind": "inlinedValue",
-        "contentType": "text/plain",
-        "description": "Azure container registry password."
-      }
-    },
-    {
-      "apiVersion": "2018-09-01-preview",
-      "name": "airportMeshRegistryPassword/v1",
-      "type": "Microsoft.ServiceFabricMesh/secrets/values",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "Microsoft.ServiceFabricMesh/secrets/airportMeshRegistryPassword"
-      ],
-      "properties": {
-        "value": "[parameters('registry-password')]"
-      }
-    },
     {
       "apiVersion": "2018-09-01-preview",
       "name": "airportMeshStorageAccountKey",
@@ -165,46 +123,6 @@
                       },
                       "headers": [
                         {
-                          "name": "Access-Control-Request-Headers",
-                          "value": "x-process-area",
-                          "type": "Exact"
-                        }
-                      ]
-                    },
-                    "destination": {
-                      "applicationName": "airportMeshApp",
-                      "serviceName": "scanService",
-                      "endpointName": "scanServiceListener"
-                    }
-                  },
-                  {
-                    "match": {
-                      "path": {
-                        "value": "/api/scan",
-                        "type": "Prefix"
-                      },
-                      "headers": [
-                        {
-                          "name": "x-process-area",
-                          "value": "0",
-                          "type": "Exact"
-                        }
-                      ]
-                    },
-                    "destination": {
-                      "applicationName": "airportMeshApp",
-                      "serviceName": "scanService",
-                      "endpointName": "scanServiceListener"
-                    }
-                  },
-                  {
-                    "match": {
-                      "path": {
-                        "value": "/api/scan",
-                        "type": "Prefix"
-                      },
-                      "headers": [
-                        {
                           "name": "x-process-area",
                           "value": "1",
                           "type": "Exact"
@@ -215,6 +133,19 @@
                       "applicationName": "airportMeshApp",
                       "serviceName": "scanServiceVNext",
                       "endpointName": "scanServiceVNextListener"
+                    }
+                  },
+                  {
+                    "match": {
+                      "path": {
+                        "value": "/api/scan",
+                        "type": "Prefix"
+                      }
+                    },
+                    "destination": {
+                      "applicationName": "airportMeshApp",
+                      "serviceName": "scanService",
+                      "endpointName": "scanServiceListener"
                     }
                   }
                 ]
@@ -230,8 +161,7 @@
       "type": "Microsoft.ServiceFabricMesh/applications",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "Microsoft.ServiceFabricMesh/networks/airportMeshNetwork",
-        "Microsoft.ServiceFabricMesh/secrets/airportMeshRegistryPassword/values/v1"
+        "Microsoft.ServiceFabricMesh/networks/airportMeshNetwork"
       ],
       "properties": {
         "description": "Service Fabric Mesh Airport Mesh demo.",
@@ -246,12 +176,17 @@
               "codePackages": [
                 {
                   "name": "checkInServiceCode",
-                  "image": "[concat(parameters('registry-server'), '/airport-mesh/check-in-service:0.1')]",
-                  "imageRegistryCredential": {
-                    "server": "[parameters('registry-server')]",
-                    "username": "[parameters('registry-username')]",
-                    "password": "[resourceId('Microsoft.ServiceFabricMesh/secrets/values','airportMeshRegistryPassword','v1')]"
-                  },
+                  "image": "amolenk/airport-mesh:checkin-1.0",
+                  "environmentVariables": [
+                    {
+                      "name": "AIRPORTMESH_STORAGE_ACCOUNT_NAME",
+                      "value": "[parameters('storageAccountName')]"
+                    },
+                    {
+                      "name": "AIRPORTMESH_STORAGE_ACCOUNT_KEY",
+                      "value": "[parameters('storageAccountKey')]"
+                    }
+                  ],
                   "endpoints": [
                     {
                       "name": "checkInServiceListener",
@@ -289,12 +224,17 @@
               "codePackages": [
                 {
                   "name": "homelandSecurityServiceCode",
-                  "image": "[concat(parameters('registry-server'), '/airport-mesh/homeland-security-service:0.8')]",
-                  "imageRegistryCredential": {
-                    "server": "[parameters('registry-server')]",
-                    "username": "[parameters('registry-username')]",
-                    "password": "[resourceId('Microsoft.ServiceFabricMesh/secrets/values','airportMeshRegistryPassword','v1')]"
-                  },
+                  "image": "amolenk/airport-mesh:homelandsecurity-1.0",
+                  "environmentVariables": [
+                    {
+                      "name": "AIRPORTMESH_STORAGE_ACCOUNT_NAME",
+                      "value": "[parameters('storageAccountName')]"
+                    },
+                    {
+                      "name": "AIRPORTMESH_STORAGE_ACCOUNT_KEY",
+                      "value": "[parameters('storageAccountKey')]"
+                    }
+                  ],
                   "resources": {
                     "requests": {
                       "cpu": "1",
@@ -321,12 +261,7 @@
               "codePackages": [
                 {
                   "name": "sortServiceCode",
-                  "image": "[concat(parameters('registry-server'), '/airport-mesh/sort-service:0.3')]",
-                  "imageRegistryCredential": {
-                    "server": "[parameters('registry-server')]",
-                    "username": "[parameters('registry-username')]",
-                    "password": "[resourceId('Microsoft.ServiceFabricMesh/secrets/values','airportMeshRegistryPassword','v1')]"
-                  },
+                  "image": "amolenk/airport-mesh:sort-1.0",
                   "endpoints": [
                     {
                       "name": "sortServiceListener",
@@ -370,12 +305,7 @@
               "codePackages": [
                 {
                   "name": "scanServiceCode",
-                  "image": "[concat(parameters('registry-server'), '/airport-mesh/scan-service:0.7')]",
-                  "imageRegistryCredential": {
-                    "server": "[parameters('registry-server')]",
-                    "username": "[parameters('registry-username')]",
-                    "password": "[resourceId('Microsoft.ServiceFabricMesh/secrets/values','airportMeshRegistryPassword','v1')]"
-                  },
+                  "image": "amolenk/airport-mesh:scan-1.0",
                   "endpoints": [
                     {
                       "name": "scanServiceListener",
@@ -413,12 +343,7 @@
               "codePackages": [
                 {
                   "name": "scanServiceVNextCode",
-                  "image": "[concat(parameters('registry-server'), '/airport-mesh/scan-service:0.8')]",
-                  "imageRegistryCredential": {
-                    "server": "[parameters('registry-server')]",
-                    "username": "[parameters('registry-username')]",
-                    "password": "[resourceId('Microsoft.ServiceFabricMesh/secrets/values','airportMeshRegistryPassword','v1')]"
-                  },
+                  "image": "amolenk/airport-mesh:scan-1.1",
                   "endpoints": [
                     {
                       "name": "scanServiceVNextListener",

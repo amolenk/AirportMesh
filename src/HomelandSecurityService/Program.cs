@@ -1,4 +1,5 @@
 ﻿using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Queue;
 using System;
@@ -28,11 +29,15 @@ namespace HomelandSecurityService
             //var secretPath = System.IO.Path.Combine(fabricSettingsPath, "airportMeshStorageAccountKey");
             //var connectionString = await File.ReadAllTextAsync(secretPath);
 
-            #region Hardcoded connection string for now
-            var connectionString = "DefaultEndpointsProtocol=https;AccountName=airportmesh;AccountKey=Hgd/rGcL8o61cuMtqf5VV4HaZ30mPcB8pDqcOLWeAp5E7Okx5H0NGRFS4kUBfJP/S6IzpLTMJmG90AmIRYNaVA==;BlobEndpoint=https://airportmesh.blob.core.windows.net/;QueueEndpoint=https://airportmesh.queue.core.windows.net/;TableEndpoint=https://airportmesh.table.core.windows.net/;FileEndpoint=https://airportmesh.file.core.windows.net/;";
-            #endregion
+            var storageAccountName = Environment.GetEnvironmentVariable("AIRPORTMESH_STORAGE_ACCOUNT_NAME");
+            var storageAccountKey = Environment.GetEnvironmentVariable("AIRPORTMESH_STORAGE_ACCOUNT_KEY");
 
-            var storageAccount = CloudStorageAccount.Parse(connectionString);
+            // Fix for Mesh not correctly handling '=' in environment variables.
+            // See https://github.com/amolenk/AirportMesh/issues/1.
+            storageAccountKey = storageAccountKey.PadRight(88, '=');
+
+            var storageCredentials = new StorageCredentials(storageAccountName, storageAccountKey);
+            var storageAccount = new CloudStorageAccount(storageCredentials, true);
 
             var queueClient = storageAccount.CreateCloudQueueClient();
             var queue = queueClient.GetQueueReference("passportcheckrequests");

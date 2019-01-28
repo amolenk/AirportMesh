@@ -1,7 +1,13 @@
 
 import './styles/site.css'
+
 const uuidv1 = require('uuid/v1');
+
 const AirportManagementSystem = require('./ams');
+const Scanner = require('./scanner');
+const LuggageBehaviour = require('./luggage-behaviour');
+const TravellerBehaviour = require('./traveller-behaviour');
+
 const BorderImage = require('./assets/border.png')
 const ScannerImage = require('./assets/scanner.png')
 const ScannerImageMetadata = require('./assets/scanner.json')
@@ -31,11 +37,7 @@ const CHECK_IN_LANE_MIDDLE = 1;
 const CHECK_IN_LANE_RIGHT = 2;
 
 var game = new Phaser.Game(896, 640, Phaser.AUTO, 'test', null, true, false);
-
 var cursors;
-
-var walkingSpeed = 200;
-var luggageSpeed = 200;
 
 var BasicGame = function (game) { };
 
@@ -43,261 +45,14 @@ BasicGame.Boot = function (game) { };
 
 var luggageBehaviour, travellerBehaviour;
 var luggageGroup, travellerGroup;
-var scanners = [];
-
-var airportManagementSystem = new AirportManagementSystem();
-
-function LuggageBehaviour() {
-    this.update = function(luggage, gameContext) {
-        if (!luggage.behaviour) {
-            luggage.behaviour = {
-                "state": "unsorted"
-            };
-        }
-
-        if (luggage.behaviour.state == "checkedIn") {
-            if (luggage.body.y <= 208) {
-                luggage.body.velocity.y = 0;
-                luggage.behaviour.state = "unsorted";
-            } else {
-                luggage.body.velocity.y = -luggageSpeed;
-            }
-        }        
-
-        if (luggage.behaviour.state == "unsorted") {
-            if (luggage.body.x >= 1221) {
-                luggage.behaviour.state = "readyForSorting";
-            } else {
-                luggage.body.velocity.x = luggageSpeed;
-            }
-        }
-
-        if (luggage.behaviour.state == "readyForSorting") {
-            luggage.body.velocity.x = 0;
-            luggage.behaviour.state = "sorting";
-
-            airportManagementSystem.sortLuggage(luggage.behaviour.airline)
-            .then(function(result) {
-                if (result) {
-                    luggage.body.velocity.y = luggageSpeed;
-                    luggage.behaviour.processArea = 1;
-                } else {
-                    luggage.body.velocity.x = luggageSpeed;
-                    luggage.behaviour.processArea = 0;
-                }
-                luggage.behaviour.state = "sorted";
-            })
-            .catch(function(error) { 
-                // Wait a second before trying again.
-                setTimeout(() => { luggage.behaviour.state = "readyForSorting" }, 1000);
-            });
-
-            return;
-        }
-
-        if (luggage.behaviour.state == "sorted") {
-            if (luggage.body.velocity.y > 0
-                && luggage.body.y >= 388) {
-                luggage.body.velocity.x = luggageSpeed;
-                luggage.body.velocity.y = 0;
-            }
-
-            if ((luggage.body.x > 2120 && luggage.body.y < 350)
-                || (luggage.body.x > 1928 && luggage.body.y > 350)) {
-                luggage.behaviour.state = "readyForScanning";
-            }
-        }
-
-        if (luggage.behaviour.state == "readyForScanning") {
-            luggage.body.velocity.x = 0;
-            luggage.behaviour.state = "scanning";
-
-            var xRayData = luggage.behaviour.suspicious ? '32ddaw2[something_iffy]312dss' : 'fsd324fsd34ncse3';
-
-            airportManagementSystem.scanLuggage(xRayData, luggage.behaviour.processArea)
-            .then(function(result) {
-                var scanner = scanners[luggage.behaviour.processArea];
-                scanner.setLedColor(result.ledStatus);
-
-                if (result.divertSetting == 0) {
-                    luggage.body.velocity.x = luggageSpeed;
-                    luggage.behaviour.state = "approved";
-                } else {
-
-                    var scanner = scanners[luggage.behaviour.processArea];
-                    scanner.divertLuggage(1000 - (result.divertSetting * 250));
-
-                    luggage.body.velocity.y = -result.divertSetting * luggageSpeed;
-
-                    if (result.divertSetting < 3) {
-                        var fadeTween = game.add.tween(luggage).to( { alpha: 0 }, 500 - (result.divertSetting * 200), Phaser.Easing.Linear.None, true);
-                        fadeTween.onComplete.add(() => {
-                            luggage.destroy();
-                        });
-                    }
-
-                    luggage.behaviour.state = "diverted";
-                }
-            })
-            .catch(function(error) { 
-                // Wait a second before trying again.
-                setTimeout(() => { luggage.behaviour.state = "readyForScanning" }, 1000);
-            });
-        }
-
-        if (luggage.behaviour.state == "diverted") {
-            if (luggage.body.y < 80) {
-                luggage.behaviour.state = "hitWall";
-            }
-        }
-
-        if (luggage.behaviour.state == "hitWall") {
-            if (!luggage.behaviour.explosionAnimation) {
-                luggage.body.velocity.y = 0;
-                luggage.behaviour.explosionAnimation = luggage.animations.play('explode');
-            } else {
-                if (!luggage.behaviour.explosionAnimation.isPlaying) {
-                    luggage.destroy();
-                }
-            }
-        }
-    }
-}
-
-function TravellerBehaviour() {
-    this.update = function(traveller, gameContext) {
-        
-        if (traveller.behaviour.state == "nextInLine") {
-            if (traveller.body.y <= 360) {
-                traveller.behaviour.state = "checkingIn";
-            } else {
-                traveller.body.velocity.y = -walkingSpeed;
-            }
-        }
-
-        if (traveller.behaviour.state == "checkingIn") {
-
-            traveller.animations.stop();
-            traveller.frame = 1;
-            traveller.body.velocity.y = 0;
-            traveller.behaviour.state = "submittingPassportCheck";
-
-            if (!traveller.behaviour.luggage) {
-                var luggage = gameContext.addLuggage(traveller.behaviour.luggageType,
-                    traveller.body.x - 10, traveller.body.y, { "state": "checkingIn", "airline": traveller.behaviour.airline });
-                traveller.behaviour.luggage = luggage;
-            }
-
-            airportManagementSystem.submitPassportCheck(traveller.behaviour.passportNumber)
-            .then(function() {
-                setTimeout(() => { traveller.behaviour.state = "pollForPassportCheckResult" }, 5000);
-            })
-            .catch(function(error) { 
-console.log('error!');
-                if (traveller.children.length == 0) {
-                    traveller.addChild(game.make.sprite(-17, -70, 'traveller-angry'));
-                }
-
-                // Wait a second before trying again.
-                setTimeout(() => { traveller.behaviour.state = "checkingIn" }, 2000);
-            });
-        }
-
-        if (traveller.behaviour.state == "pollForPassportCheckResult") {
-
-            traveller.behaviour.state = "pollingForPassportCheckResult";
-
-            // if (traveller.children.length == 0) {
-            //     traveller.addChild(game.make.sprite(-17, -70, 'traveller-angry'));
-            // }
-
-            airportManagementSystem.getPassportCheckStatus(traveller.behaviour.passportNumber)
-            .then(function(result) {
-                if (result == "Ok") {
-
-                    if (!traveller.behaviour.waitingForHomelandSecurity
-                        && traveller.children.length == 0) {
-                        traveller.addChild(game.make.sprite(-17, -70, 'traveller-happy'));
-                    }
-
-                    traveller.behaviour.state = "checkedIn";
-                } else {
-                    console.log(result);
-
-                    if (traveller.children.length == 0) {
-                        traveller.addChild(game.make.sprite(-17, -70, 'traveller-angry'));
-                    }
-
-                    traveller.behaviour.waitingForHomelandSecurity = true;
-
-                    // Wait a second before trying again.
-                    setTimeout(() => { traveller.behaviour.state = "pollForPassportCheckResult" }, 2000);
-                }
-            });
-        }
-
-        if (traveller.behaviour.state == "checkedIn") {
-
-            traveller.behaviour.state = "walkingToGate";
-
-            gameContext.updateScore(!traveller.behaviour.waitingForHomelandSecurity);
-
-            traveller.animations.play('walkLeft');
-            traveller.body.velocity.x = -walkingSpeed;
-
-            // nicer, but travellers need to be added to distinct groups
-//            traveller.body.velocity.y = walkingSpeed / 8;
-
-            traveller.behaviour.luggage.behaviour.state = "checkedIn";
-            traveller.behaviour.luggage = null;
-
-            setTimeout(() => {
-                gameContext.addTraveller(
-                    traveller.behaviour.lane,
-                    traveller.behaviour.luggageType,
-                    traveller.behaviour.airline);    
-            }, game.rnd.integerInRange(1000, 2000));
-        }
-
-        if (traveller.behaviour.state == "walkingToGate") {
-
-            if (traveller.body.x < -32) {
-                traveller.destroy();
-            }
-        }
-    }
-}
-
-function Scanner(scannerSprite, diverterSprite) {
-
-    this.divertLuggage = function(force) {
-
-        if (this.divertLuggageTween == null) {
-            this.divertLuggageTween = game.add.tween(diverterSprite);
-            this.divertLuggageTween.from({ y: scannerSprite.y - 32 }, force, Phaser.Easing.Linear.In, false);
-            this.divertLuggageTween.onComplete.add(() => {
-                this.divertLuggageTween = null;
-            });
-            this.divertLuggageTween.start();
-        }
-    }
-
-    this.setLedColor = function(ok) {
-        scannerSprite.frame = ok ? 1 : 2;
-    }
-}
 
 BasicGame.Boot.prototype =
 {
-//    divertLuggageTween: null,
     travellersProcessed: 0,
     travellersHappy: 0,
-    //scoreText,
+    scanners: [],
 
     preload: function () {
-
-        // ? Particle storm
-        game.forceSingleUpdate = true;
 
         // Load assets.
         game.load.image('border', BorderImage);
@@ -319,8 +74,9 @@ BasicGame.Boot.prototype =
     },
     create: function () {
 
-        luggageBehaviour = new LuggageBehaviour();
-        travellerBehaviour = new TravellerBehaviour();
+        var airportManagementSystem = new AirportManagementSystem();
+        luggageBehaviour = new LuggageBehaviour(game, airportManagementSystem);
+        travellerBehaviour = new TravellerBehaviour(game, airportManagementSystem);
 
         cursors = game.input.keyboard.createCursorKeys();
 
@@ -332,17 +88,15 @@ BasicGame.Boot.prototype =
         game.add.sprite(896, 0, 'sort-background');
         game.add.sprite(1792, 0, 'scan-background');
 
-
         luggageGroup = game.add.group();
         travellerGroup = game.add.group();
 
         game.add.sprite(1194, 172, 'sort-o-tron');
 
-
         this.luggageDiverter = game.add.sprite(2122, 256, 'scanner-push');
 
-        scanners.push(this.addScanner(2112, 256));
-        scanners.push(this.addScanner(1920, 448));
+        this.scanners.push(this.addScanner(2112, 256));
+        this.scanners.push(this.addScanner(1920, 448));
 
         // Add a scanning effect to the scanners.
         var scannerBeam = game.add.sprite(2112, 192, 'scanner-beam');
@@ -364,14 +118,6 @@ BasicGame.Boot.prototype =
         this.scoreText.setShadow(3, 3, 'rgba(0,0,0,0.5)', 2);
         this.scoreText.fixedToCamera = true;
 
-        //  Create our Timer
-        var timer = game.time.create(false);
-        timer.loop(500, () => {
-           //this.addSuitcase();
-        }, this);
-        timer.start();
-
-        var self = this;
         this.addTraveller(CHECK_IN_LANE_MIDDLE, LUGGAGE_TYPE_RED, 'OW');
         setTimeout(() => this.addTraveller(CHECK_IN_LANE_LEFT, LUGGAGE_TYPE_BLUE, 'KL'), 500);
         setTimeout(() => this.addTraveller(CHECK_IN_LANE_RIGHT, LUGGAGE_TYPE_GREEN, 'OA'), 1000);
@@ -381,8 +127,6 @@ BasicGame.Boot.prototype =
         var key9 = game.input.keyboard.addKey(Phaser.Keyboard.NINE);
         var key0 = game.input.keyboard.addKey(Phaser.Keyboard.ZERO);
         var keySpace = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-
-        //game.camera.x = 1680;
 
         key1.onDown.add(() => this.addExtraLuggage(LUGGAGE_TYPE_PACKAGE, game.camera.x, 'KL', false));
         key2.onDown.add(() => this.addExtraLuggage(LUGGAGE_TYPE_PACKAGE, game.camera.x, 'OW', false));
@@ -401,20 +145,13 @@ BasicGame.Boot.prototype =
             game.camera.x += 16;
         }
 
-        var gameContext = this;
-
-        travellerGroup.forEach(function (traveller) {
-            travellerBehaviour.update(traveller, gameContext);
+        travellerGroup.forEach((traveller) => {
+            travellerBehaviour.update(traveller, this);
         });
 
-        luggageGroup.forEach(function (luggage) {
-            luggageBehaviour.update(luggage, gameContext);
+        luggageGroup.forEach((luggage) => {
+            luggageBehaviour.update(luggage, this);
         });
-    },
-    render: function () {
-        //game.debug.font = '28px Courier';
-        //game.debug.text(game.time.fps || '--', 2, 14, "#a7aebe");
-        //game.debug.cameraInfo(game.camera, 32, 32);
     },
     addScanner: function(x, y) {
 
@@ -427,7 +164,7 @@ BasicGame.Boot.prototype =
             './scanner-beam-', 1, 3), 6, true);
         scannerBeam.animations.play('scan');
 
-        return new Scanner(scannerSprite, diverterSprite);
+        return new Scanner(scannerSprite, diverterSprite, game);
 
     },
     addTraveller: function(lane, luggageType, airline) {
@@ -479,7 +216,7 @@ BasicGame.Boot.prototype =
 
         var luggage = this.addLuggage(luggageType, 1220, 215, behaviour);
         luggage.frame = 3;
-        luggage.body.velocity.x = luggageSpeed;
+        luggage.body.velocity.x = luggageBehaviour.luggageSpeed;
 
         if (suspicious) {
             luggage.tint = 0xFF5555;

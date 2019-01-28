@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Queue;
 
@@ -19,8 +20,20 @@ namespace CheckInService.Controllers
 
         public PassportController()
         {
-            var connectionString = "DefaultEndpointsProtocol=https;AccountName=airportmesh;AccountKey=Hgd/rGcL8o61cuMtqf5VV4HaZ30mPcB8pDqcOLWeAp5E7Okx5H0NGRFS4kUBfJP/S6IzpLTMJmG90AmIRYNaVA==;BlobEndpoint=https://airportmesh.blob.core.windows.net/;QueueEndpoint=https://airportmesh.queue.core.windows.net/;TableEndpoint=https://airportmesh.table.core.windows.net/;FileEndpoint=https://airportmesh.file.core.windows.net/;";
-            var storageAccount = CloudStorageAccount.Parse(connectionString);
+            // This should work, but doesn't :-(
+            //var fabricSettingsPath = Environment.GetEnvironmentVariable("Fabric_SettingPath");
+            //var secretPath = System.IO.Path.Combine(fabricSettingsPath, "airportMeshStorageAccountKey");
+            //var connectionString = await File.ReadAllTextAsync(secretPath);
+
+            var storageAccountName = Environment.GetEnvironmentVariable("AIRPORTMESH_STORAGE_ACCOUNT_NAME");
+            var storageAccountKey = Environment.GetEnvironmentVariable("AIRPORTMESH_STORAGE_ACCOUNT_KEY");
+
+            // Fix for Mesh not correctly handling '=' in environment variables.
+            // See https://github.com/amolenk/AirportMesh/issues/1.
+            storageAccountKey = storageAccountKey.PadRight(88, '=');
+
+            var storageCredentials = new StorageCredentials(storageAccountName, storageAccountKey);
+            var storageAccount = new CloudStorageAccount(storageCredentials, true);
 
             var queueClient = storageAccount.CreateCloudQueueClient();
             _queue = queueClient.GetQueueReference("passportcheckrequests");
@@ -34,13 +47,12 @@ namespace CheckInService.Controllers
         {
             if (await HasPassportCheckCompleted(passportNumber))
             {
-                // The request has been processed, return 200 - Ok.
+                // The request has been processed.
                 return Ok("Ok");
             }
 
-            // The request hasn't been processed completely yet, let
-            // the caller know by returning 202 - Accepted.
-            return Accepted("Busy");
+            // The request hasn't been processed completely yet.
+            return Ok("Busy");
         }
 
         [HttpPut("{passportNumber}")]
@@ -49,12 +61,7 @@ namespace CheckInService.Controllers
             var message = new CloudQueueMessage(passportNumber);
             await _queue.AddMessageAsync(message);
 
-            // Wait a small amount of time for the request to be processed.
-//            await Task.Delay(250);
-
             return Accepted();
-            // Get the status of the passport check.
-//            return await Get(passportNumber);
         }
 
         private async Task<bool> HasPassportCheckCompleted(string passportNumber)
