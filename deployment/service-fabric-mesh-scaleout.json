@@ -148,7 +148,6 @@
         "services": [
           {
             "type": "Microsoft.ServiceFabricMesh/services",
-            "location": "[parameters('location')]",
             "name": "checkInService",
             "properties": {
               "description": "Check-in Service for Airport Mesh demo.",
@@ -196,7 +195,6 @@
           },
           {
             "type": "Microsoft.ServiceFabricMesh/services",
-            "location": "[parameters('location')]",
             "name": "homelandSecurityService",
             "properties": {
               "description": "Homeland Security Service for Airport Mesh demo.",
@@ -233,7 +231,6 @@
           },
           {
             "type": "Microsoft.ServiceFabricMesh/services",
-            "location": "[parameters('location')]",
             "name": "sortService",
             "properties": {
               "description": "Sort Service for Airport Mesh demo.",
@@ -277,7 +274,6 @@
           },
           {
             "type": "Microsoft.ServiceFabricMesh/services",
-            "location": "[parameters('location')]",
             "name": "scanService",
             "properties": {
               "description": "Scan Service for Airport Mesh demo.",
