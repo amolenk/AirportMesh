@@ -27,7 +27,7 @@ Start the back-end services by running Docker Compose Up:
 docker-compose -f "src/docker-compose.yml" up -d --build
 ```
 
-The front-end is designed to be run locally. Start it in development mode to connect to the local back-end services:
+The front-end is designed to be run locally. Start it in development mode to connect to the local back-end services (from the /src folder):
 
 ```
 npm run start:dev
@@ -42,7 +42,7 @@ You can use the ARM templates in the /deployment folder to deploy the back-end s
 az mesh deployment create --template-file ./deployment/service-fabric-mesh.json --parameters "{\"location\": {\"value\": \"westeurope\"}, \"fileShareName\": {\"value\": \"YOUR_FILE_SHARE_NAME\"}, \"storageAccountName\": {\"value\": \"YOUR_STORAGE_ACCOUNT_NAME\"}, \"storageAccountKey\": {\"value\": \"YOUR_STORAGE_ACCOUNT_KEY\"}}"
 ```
 
-Set the following environment variable:
+Set the following environment variable locally on your machine to point the front-end to the Mesh application:
 
 - AIRPORTMESH_MESH_IP = *\<IP adres of the Mesh application>*
 
