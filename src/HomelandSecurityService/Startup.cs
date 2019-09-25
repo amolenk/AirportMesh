@@ -1,12 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Polly;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
-namespace CheckInService
+namespace HomelandSecurityService
 {
     public class Startup
     {
@@ -25,15 +30,6 @@ namespace CheckInService
                 options.AddPolicy("AllowLocalhostOrigin",
                     builder => builder.WithOrigins("http://localhost:8080").WithMethods("GET", "PUT"));
             });
-
-            services.AddHttpClient<HomelandSecurityClient>()
-                .AddTransientHttpErrorPolicy(builder => builder
-                    .WaitAndRetryAsync(new []
-                    {
-                        TimeSpan.FromSeconds(1),
-                        TimeSpan.FromSeconds(2),
-                        TimeSpan.FromSeconds(4)
-                    }));
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }

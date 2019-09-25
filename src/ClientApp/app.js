@@ -202,7 +202,6 @@ BasicGame.Boot.prototype =
             './explosion-', 1, 5), 12, false);
 
         luggage.behaviour = behaviour;
-        // luggage.behaviour.airline = 
 
         return luggage;
     },

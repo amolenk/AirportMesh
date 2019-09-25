@@ -25,45 +25,20 @@ function TravellerBehaviour(game, airportManagementSystem) {
                 traveller.behaviour.luggage = luggage;
             }
 
-            airportManagementSystem.submitPassportCheck(traveller.behaviour.passportNumber)
-            .then(() => {
-                setTimeout(() => { traveller.behaviour.state = "pollForPassportCheckResult" }, 5000);
+            airportManagementSystem.checkin(traveller.behaviour.passportNumber)
+            .then((result) => {
+                if (traveller.children.length == 0) {
+                    traveller.addChild(game.make.sprite(-17, -70, 'traveller-happy'));
+                }
+                traveller.behaviour.state = "checkedIn";
             })
-            .catch((error) => { 
+            .catch(() => {
                 if (traveller.children.length == 0) {
                     traveller.addChild(game.make.sprite(-17, -70, 'traveller-angry'));
                 }
-
-                // Wait a second before trying again.
-                setTimeout(() => { traveller.behaviour.state = "checkingIn" }, 2000);
-            });
-        }
-
-        if (traveller.behaviour.state == "pollForPassportCheckResult") {
-
-            traveller.behaviour.state = "pollingForPassportCheckResult";
-
-            airportManagementSystem.getPassportCheckStatus(traveller.behaviour.passportNumber)
-            .then((result) => {
-                if (result == "Ok") {
-
-                    if (!traveller.behaviour.waitingForHomelandSecurity
-                        && traveller.children.length == 0) {
-                        traveller.addChild(game.make.sprite(-17, -70, 'traveller-happy'));
-                    }
-
-                    traveller.behaviour.state = "checkedIn";
-                } else {
-
-                    if (traveller.children.length == 0) {
-                        traveller.addChild(game.make.sprite(-17, -70, 'traveller-angry'));
-                    }
-
-                    traveller.behaviour.waitingForHomelandSecurity = true;
-
-                    // Wait a second before trying again.
-                    setTimeout(() => { traveller.behaviour.state = "pollForPassportCheckResult" }, 2000);
-                }
+                // Not really checkedIn, but this makes them go away ;-)
+                traveller.behaviour.angry = true;
+                traveller.behaviour.state = "checkedIn";
             });
         }
 
@@ -71,14 +46,18 @@ function TravellerBehaviour(game, airportManagementSystem) {
 
             traveller.behaviour.state = "walkingToGate";
 
-            gameContext.updateScore(!traveller.behaviour.waitingForHomelandSecurity);
+            gameContext.updateScore(!traveller.behaviour.angry);
 
             traveller.animations.play('walkLeft');
             traveller.body.velocity.x = -this.walkingSpeed;
 
-            traveller.behaviour.luggage.behaviour.state = "checkedIn";
-            traveller.behaviour.luggage = null;
-
+            if (traveller.behaviour.angry) {
+                traveller.behaviour.luggage.destroy();
+                traveller.behaviour.luggage = null;
+            } else {
+                traveller.behaviour.luggage.behaviour.state = "checkedIn";
+            }
+            
             setTimeout(() => {
                 gameContext.addTraveller(
                     traveller.behaviour.lane,
