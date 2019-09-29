@@ -27,13 +27,14 @@ namespace CheckInService
             });
 
             services.AddHttpClient<HomelandSecurityClient>()
-                .AddTransientHttpErrorPolicy(builder => builder
+                .AddTransientHttpErrorPolicy(builder => builder
                     .WaitAndRetryAsync(new []
                     {
                         TimeSpan.FromSeconds(1),
                         TimeSpan.FromSeconds(2),
                         TimeSpan.FromSeconds(4)
-                    }));
+                    }))
+                ;
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }

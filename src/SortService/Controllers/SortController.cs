@@ -8,10 +8,15 @@ namespace SortService.Controllers
     [ApiController]
     public class SortController : ControllerBase
     {
-        private static readonly Policy<int> SortingFailurePolicy = Policy<int>
+        private static readonly Policy<int> SortingFailureRetryPolicy = Policy<int>
             .Handle<Exception>()
             .WaitAndRetry(3, _ => TimeSpan.FromSeconds(1))
             ;
+
+        private static readonly Policy<int> SortingFailureFallbackPolicy = Policy<int>
+            .Handle<Exception>()
+            .Fallback(0)
+            .Wrap(SortingFailureRetryPolicy);
 
         [HttpGet("{flightNumber}")]
         public ActionResult<int> Get(string flightNumber)
@@ -19,16 +24,8 @@ namespace SortService.Controllers
             // Get the airline code from the flight number.
             var airline = flightNumber.Substring(0, 2);
 
-            try
-            {
-                return SortingFailurePolicy.Execute(() =>
-                    HighlyComplexSortingAlgorithmWithDependenciesThatSometimesFail(airline));
-            }
-            catch
-            {
-                // Default to conveyor belt 0 if something went wrong.
-                return 0;
-            }
+            return SortingFailureFallbackPolicy.Execute(() =>
+                HighlyComplexSortingAlgorithmWithDependenciesThatSometimesFail(airline));
         }
 
         #region Code under One-Way Airlines(TM) NDA
