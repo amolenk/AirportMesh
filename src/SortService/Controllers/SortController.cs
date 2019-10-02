@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Polly;
 
@@ -8,32 +9,37 @@ namespace SortService.Controllers
     [ApiController]
     public class SortController : ControllerBase
     {
-        private static readonly Policy<int> SortingFailureRetryPolicy = Policy<int>
-            .Handle<Exception>()
-            .WaitAndRetry(3, _ => TimeSpan.FromSeconds(1))
-            ;
+        #region
 
-        private static readonly Policy<int> SortingFailureFallbackPolicy = Policy<int>
+        private static readonly AsyncPolicy<int> CircuitBreakerPolicy = Policy<int>
             .Handle<Exception>()
-            .Fallback(0)
-            .Wrap(SortingFailureRetryPolicy);
+            .CircuitBreakerAsync(3, TimeSpan.FromSeconds(10));
+
+        #endregion
+        
+        private static readonly AsyncPolicy<int> FallbackPolicy = Policy<int>
+            .Handle<Exception>()
+            .FallbackAsync(0);
 
         [HttpGet("{flightNumber}")]
-        public ActionResult<int> Get(string flightNumber)
+        public async Task<ActionResult<int>> Get(string flightNumber)
         {
             // Get the airline code from the flight number.
             var airline = flightNumber.Substring(0, 2);
 
-            return SortingFailureFallbackPolicy.Execute(() =>
-                HighlyComplexSortingAlgorithmWithDependenciesThatSometimesFail(airline));
+            return await FallbackPolicy.ExecuteAsync(() =>
+                HighlyComplexSortingAlgorithmWithDependenciesThatSometimesFailAsync(airline));
         }
 
         #region Code under One-Way Airlines(TM) NDA
-        private int HighlyComplexSortingAlgorithmWithDependenciesThatSometimesFail(string airline)
+
+        private async Task<int> HighlyComplexSortingAlgorithmWithDependenciesThatSometimesFailAsync(string airline)
         {
             if (System.IO.File.Exists("breakSortOTron"))
             {
-                throw new Exception("Boom!");
+                // Simulate timeout
+                await Task.Delay(2500);
+                throw new Exception("Timed out!");
             }
 
             switch (airline)
@@ -43,6 +49,7 @@ namespace SortService.Controllers
                 default: return 0;
             }
         }
+        
         #endregion
     }
 }

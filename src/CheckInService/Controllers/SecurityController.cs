@@ -18,6 +18,10 @@ namespace CheckInService.Controllers
         public async Task<IActionResult> Put(string passportNumber)
         {
             var result = await _homelandSecurityClient.DoBackgroundCheck(passportNumber);
+
+            #region Do other important check-in thingies
+            // TODO
+            #endregion
             
             return Ok(result);
         }

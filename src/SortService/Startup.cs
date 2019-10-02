@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
@@ -31,6 +32,9 @@ namespace SortService
                     builder => builder.WithOrigins("http://localhost:8080"));
             });
 
+            services.AddHealthChecks()
+                .AddCheck("Custom", new CustomHealthCheck());
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
 
@@ -41,6 +45,8 @@ namespace SortService
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseHealthChecks("/hc");
 
             app.UseCors("AllowLocalhostOrigin");
             app.UseMvc();

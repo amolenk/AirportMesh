@@ -11,7 +11,6 @@ namespace CheckInService
         public HomelandSecurityClient(HttpClient client)
         {
             _client = client;
-            _client.BaseAddress = new Uri("http://airportmesh.homelandsecurity/");
         }
 
         public async Task<bool> DoBackgroundCheck(string passportNumber)
