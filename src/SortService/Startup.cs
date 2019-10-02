@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
@@ -46,7 +47,10 @@ namespace SortService
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHealthChecks("/hc");
+            app.UseHealthChecks("/hc", new HealthCheckOptions
+            {
+                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+            });
 
             app.UseCors("AllowLocalhostOrigin");
             app.UseMvc();

@@ -27,3 +27,11 @@ services:
     build: SortService
     ports:
       - "5002:80"
+
+  # healthcheckui:
+  #   image: xabarilcoding/healthchecksui:latest
+  #   environment: 
+  #     - HealthChecksUI:HealthChecks:0:Name=SortOTron
+  #     - HealthChecksUI:HealthChecks:0:Uri=http://airportmesh.sort/hc
+  #   ports:
+  #     - 5004:80
