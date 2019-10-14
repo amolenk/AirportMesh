@@ -19,7 +19,8 @@ namespace SortService.Controllers
         
         private static readonly AsyncPolicy<int> FallbackPolicy = Policy<int>
             .Handle<Exception>()
-            .FallbackAsync(0);
+            .FallbackAsync(0)
+            .WrapAsync(CircuitBreakerPolicy);
 
         [HttpGet("{flightNumber}")]
         public async Task<ActionResult<int>> Get(string flightNumber)

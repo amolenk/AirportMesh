@@ -26,24 +26,24 @@ namespace CheckInService
                     builder => builder.WithOrigins("http://localhost:8080").WithMethods("GET", "PUT"));
             });
 
-            services.AddHttpClient<HomelandSecurityClient>(client =>
-            {
-                client.BaseAddress = new Uri("http://airportmesh.homelandsecurity/");
-            });
+            // services.AddHttpClient<HomelandSecurityClient>(client =>
+            // {
+            //     client.BaseAddress = new Uri("http://airportmesh.homelandsecurity/");
+            // })
 
             #region
 
-//             Random jitterer = new Random(); 
+            Random jitterer = new Random(); 
 
-//             services.AddHttpClient<HomelandSecurityClient>(client =>
-//                 {
-//                     client.BaseAddress = new Uri("http://airportmesh.homelandsecurity/");
-//                 })
-//                 .AddTransientHttpErrorPolicy(builder => builder
-//                     .WaitAndRetryAsync(3, retryAttempt =>
-//                          TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
-//                          + TimeSpan.FromMilliseconds(jitterer.Next(0, 100)))
-//                 );
+            services.AddHttpClient<HomelandSecurityClient>(client =>
+                {
+                    client.BaseAddress = new Uri("http://airportmesh.homelandsecurity/");
+                })
+                .AddTransientHttpErrorPolicy(builder => builder
+                    .WaitAndRetryAsync(3, retryAttempt =>
+                         TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
+                         + TimeSpan.FromMilliseconds(jitterer.Next(0, 100)))
+                );
 
             #endregion
 
