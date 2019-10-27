@@ -1,0 +1,15 @@
+version: '3.4'
+
+# Visual Studio Code doesn't look at the compose.override.yml file (https://github.com/Microsoft/vscode-docker/issues/379).
+# For now, set all debug environment settings here.
+
+services:
+
+  airportmesh.homelandsecurity:
+    image: homelandsecurityservice:latest
+    build: HomelandSecurityService
+    environment:
+      - AIRPORTMESH_STORAGE_ACCOUNT_NAME=${AIRPORTMESH_STORAGE_ACCOUNT_NAME}
+      - AIRPORTMESH_STORAGE_ACCOUNT_KEY=${AIRPORTMESH_STORAGE_ACCOUNT_KEY}
+    ports:
+      - "5001:80"

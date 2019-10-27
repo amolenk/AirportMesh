@@ -1,0 +1,83 @@
+apiVersion: core.oam.dev/v1alpha1
+kind: ComponentSchematic
+metadata:
+  name: check-in-service
+spec:
+  workloadType: core.oam.dev/v1alpha1.Server
+  parameters:
+    - name: storage_account_name
+      type: string
+      required: true
+    - name: storage_account_key
+      type: string
+      required: true
+  containers:
+    - name: check-in-service
+      image: amolenk/airport-mesh:checkin-1.0
+      env:
+        - name: AIRPORTMESH_STORAGE_ACCOUNT_NAME
+          fromParam: storage_account_name
+        - name: AIRPORTMESH_STORAGE_ACCOUNT_KEY
+          fromParam: storage_account_key
+      ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+  workloadSettings:
+    - name: foo
+      type: string
+      value: bar
+---
+apiVersion: core.oam.dev/v1alpha1
+kind: ComponentSchematic
+metadata:
+  name: homeland-security-service
+spec:
+  workloadType: core.oam.dev/v1alpha1.Server
+  parameters:
+    - name: storage_account_name
+      type: string
+      required: true
+    - name: storage_account_key
+      type: string
+      required: true
+  containers:
+    - name: homeland-security-service
+      image: amolenk/airport-mesh:homelandsecurity-1.0
+      env:
+        - name: AIRPORTMESH_STORAGE_ACCOUNT_NAME
+          fromParam: storage_account_name
+        - name: AIRPORTMESH_STORAGE_ACCOUNT_KEY
+          fromParam: storage_account_key
+      ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+---
+apiVersion: core.oam.dev/v1alpha1
+kind: ComponentSchematic
+metadata:
+  name: scan-service
+spec:
+  workloadType: core.oam.dev/v1alpha1.Server
+  containers:
+    - name: scan-service
+      image: amolenk/airport-mesh:scan-1.0
+      ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+---
+apiVersion: core.oam.dev/v1alpha1
+kind: ComponentSchematic
+metadata:
+  name: sort-service
+spec:
+  workloadType: core.oam.dev/v1alpha1.Server
+  containers:
+    - name: sort-service
+      image: amolenk/airport-mesh:sort-1.0
+      ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP

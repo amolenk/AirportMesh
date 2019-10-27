@@ -8,10 +8,10 @@ function AirportManagementSystem() {
     } else {
         // Mesh
         console.log('Using Service Fabric Mesh endpoints');
-        var meshIpAddress = process.env.AIRPORTMESH_MESH_IP;
-        this.checkInServiceAddress = 'http://' + meshIpAddress + '/api';
-        this.scanServiceAddress = 'http://' + meshIpAddress + '/api';
-        this.sortServiceAddress = 'http://' + meshIpAddress + '/api';
+//        var meshIpAddress = process.env.AIRPORTMESH_MESH_IP;
+        this.checkInServiceAddress = 'http://example.com/api';
+        this.scanServiceAddress = 'http://example.com/api';
+        this.sortServiceAddress = 'http://example.com/api';
     }
 
     this.sortLuggage = function (airlineCode) {
