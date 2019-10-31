@@ -34,7 +34,7 @@ spec:
             value: /api/scan
           - name: service_port
             value: 80
-  - name: sort-service-v2
+  - name: sort-service
     instanceName: airport-mesh-sort
     traits:
       - name: ingress
