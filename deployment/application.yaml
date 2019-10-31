@@ -25,26 +25,21 @@ spec:
         value: airportmesh
       - name: storage_account_key
         value: 1o6TgAljU0CwZL9neBADsrvDq1CIoN0o5mIs4UFE2/I8RZdKm7jrNjXFFBScGGjjECg4q073+Oq4cD6qVlCXdw==
-    traits:
-      - name: manual-scaler
-        parameterValues:
-          - name: replicaCount
-            value: 1
   - name: scan-service
     instanceName: airport-mesh-scan
     traits:
       - name: ingress
         parameterValues:
-        - name: path
-          value: /api/scan
-        - name: service_port
-          value: 80
-  - name: sort-service
+          - name: path
+            value: /api/scan
+          - name: service_port
+            value: 80
+  - name: sort-service-v2
     instanceName: airport-mesh-sort
     traits:
       - name: ingress
         parameterValues:
-        - name: path
-          value: /api/sort
-        - name: service_port
-          value: 80
+          - name: path
+            value: /api/sort
+          - name: service_port
+            value: 80

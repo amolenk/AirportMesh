@@ -7,8 +7,6 @@ function AirportManagementSystem() {
         this.sortServiceAddress = 'http://localhost:5002/api';
     } else {
         // Mesh
-        console.log('Using Service Fabric Mesh endpoints');
-//        var meshIpAddress = process.env.AIRPORTMESH_MESH_IP;
         this.checkInServiceAddress = 'http://example.com/api';
         this.scanServiceAddress = 'http://example.com/api';
         this.sortServiceAddress = 'http://example.com/api';
