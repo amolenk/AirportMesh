@@ -67,7 +67,7 @@ spec:
 apiVersion: core.oam.dev/v1alpha1
 kind: ComponentSchematic
 metadata:
-  name: sort-service
+  name: sort-service-v2
 spec:
   workloadType: core.oam.dev/v1alpha1.Server
   containers:
@@ -77,3 +77,10 @@ spec:
         - name: http
           containerPort: 80
           protocol: TCP
+      resources:
+        volumes:
+          - name: myvol
+            mountPath: /app/data
+            disk:
+              required: "50M"
+              ephemeral: false

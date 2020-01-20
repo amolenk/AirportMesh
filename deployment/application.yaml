@@ -20,6 +20,11 @@ spec:
           value: 80
   - name: homeland-security-service
     instanceName: airport-mesh-homeland-security
+    traits:
+      - name: manual-scaler
+        parameterValues:
+          - name: replicaCount
+            value: 3
     parameterValues:
       - name: storage_account_name
         value: airportmesh
@@ -34,8 +39,8 @@ spec:
             value: /api/scan
           - name: service_port
             value: 80
-  - name: sort-service
-    instanceName: airport-mesh-sort
+  - name: sort-service-v2
+    instanceName: airport-mesh-sort-v2
     traits:
       - name: ingress
         parameterValues:
@@ -43,3 +48,9 @@ spec:
             value: /api/sort
           - name: service_port
             value: 80
+      - name: volume-mounter
+        parameterValues:
+          - name: volumeName
+            value: myvol
+          - name: storageClass
+            value: hostpath
