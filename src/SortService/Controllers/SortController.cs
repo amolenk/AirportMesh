@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
+using Polly;
 
 namespace SortService.Controllers
 {
@@ -13,7 +9,18 @@ namespace SortService.Controllers
     [ApiController]
     public class SortController : ControllerBase
     {
-        private const string InstructionsPath = "data/sort-instructions.json";
+        #region
+
+        private static readonly AsyncPolicy<int> CircuitBreakerPolicy = Policy<int>
+            .Handle<Exception>()
+            .CircuitBreakerAsync(3, TimeSpan.FromSeconds(10));
+
+        #endregion
+        
+        private static readonly AsyncPolicy<int> FallbackPolicy = Policy<int>
+            .Handle<Exception>()
+            .FallbackAsync(0)
+            .WrapAsync(CircuitBreakerPolicy);
 
         [HttpGet("{flightNumber}")]
         public async Task<ActionResult<int>> Get(string flightNumber)
@@ -21,23 +28,29 @@ namespace SortService.Controllers
             // Get the airline code from the flight number.
             var airline = flightNumber.Substring(0, 2);
 
-            // Load the instructions for the sorting machine from disk.
-            var instructions = await LoadSortingMachineInstructionsAsync();
-
-            // Default to conveyor belt 0 if the airline isn't mapped.
-            return instructions.ContainsKey(airline) ? instructions[airline] : 0;
+            return await FallbackPolicy.ExecuteAsync(() =>
+                HighlyComplexSortingAlgorithmWithDependenciesThatSometimesFailAsync(airline));
         }
 
-        private async Task<Dictionary<string, int>> LoadSortingMachineInstructionsAsync()
-        {
-            if (System.IO.File.Exists(InstructionsPath))
-            {
-                var json = await System.IO.File.ReadAllTextAsync(InstructionsPath);
+        #region Code under One-Way Airlines(TM) NDA
 
-                return JsonConvert.DeserializeObject<Dictionary<string, int>>(json);
+        private async Task<int> HighlyComplexSortingAlgorithmWithDependenciesThatSometimesFailAsync(string airline)
+        {
+            if (System.IO.File.Exists("breakSortOTron"))
+            {
+                // Simulate timeout
+                await Task.Delay(2500);
+                throw new Exception("Timed out!");
             }
 
-            return new Dictionary<string, int>();
+            switch (airline)
+            {
+                case "KL": return 1;
+                case "OA": return 1;
+                default: return 0;
+            }
         }
+        
+        #endregion
     }
 }

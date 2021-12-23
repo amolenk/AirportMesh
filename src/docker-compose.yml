@@ -9,27 +9,29 @@ services:
     build: CheckInService
     ports:
       - "5000:80"
-    environment:
-      - AIRPORTMESH_STORAGE_ACCOUNT_NAME=${AIRPORTMESH_STORAGE_ACCOUNT_NAME}
-      - AIRPORTMESH_STORAGE_ACCOUNT_KEY=${AIRPORTMESH_STORAGE_ACCOUNT_KEY}
 
   airportmesh.homelandsecurity:
     image: airport-mesh/homeland-security-service:latest
     build: HomelandSecurityService
-    environment:
-      - AIRPORTMESH_STORAGE_ACCOUNT_NAME=${AIRPORTMESH_STORAGE_ACCOUNT_NAME}
-      - AIRPORTMESH_STORAGE_ACCOUNT_KEY=${AIRPORTMESH_STORAGE_ACCOUNT_KEY}
-
-  airportmesh.scan:
-    image: airport-mesh/scan-service:latest
-    build: ScanService
     ports:
-      - "5001:80"
+      - "5003:80"
+
+  # airportmesh.scan:
+  #   image: airport-mesh/scan-service:latest
+  #   build: ScanService
+  #   ports:
+  #     - "5001:80"
 
   airportmesh.sort:
     image: airport-mesh/sort-service:latest
     build: SortService
     ports:
       - "5002:80"
-    volumes:
-      - "~/SortOTron:/app/data"
+
+  healthcheckui:
+    image: xabarilcoding/healthchecksui:latest
+    environment: 
+      - HealthChecksUI:HealthChecks:0:Name=SortOTron
+      - HealthChecksUI:HealthChecks:0:Uri=http://airportmesh.sort/hc
+    ports:
+      - 5004:80

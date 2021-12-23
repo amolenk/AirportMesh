@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
+using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using ScanService.Models;
 
 namespace ScanService.Controllers
@@ -13,7 +13,7 @@ namespace ScanService.Controllers
     public class ScanController : ControllerBase
     {
         [HttpGet]
-        public ActionResult<ScanOTronInstructions> Get([FromQuery] string xRayData)
+        public async Task<ActionResult<ScanOTronInstructions>> Get([FromQuery] string xRayData)
         {
             // This ultra-sophisticated AI algorithm can detect contraband/illegal
             // items in scanned x-ray images of baggage.
@@ -28,10 +28,25 @@ namespace ScanService.Controllers
             var positiveResult = XRayDataAnalyzer.Analyze(xRayData);
             if (positiveResult)
             {
+                await UploadXRayDataToBlobAsync(xRayData);
+
                 return new ScanOTronInstructions(true, DivertSetting.LittleNudge);
             }
 
             return new ScanOTronInstructions(false, DivertSetting.None);
+        }
+
+        private async Task UploadXRayDataToBlobAsync(string xRayData)
+        {
+            CloudStorageAccount account = CloudStorageAccount.Parse(Environment.GetEnvironmentVariable("StorageConnectionString"));
+            
+            CloudBlobClient blobClient = account.CreateCloudBlobClient();
+
+            CloudBlobContainer blobContainer = blobClient.GetContainerReference("xrays");
+
+            CloudBlockBlob blob = blobContainer.GetBlockBlobReference($"{DateTime.Now.Ticks}-{Guid.NewGuid()}");
+
+            await blob.UploadTextAsync(xRayData);
         }
     }
 }

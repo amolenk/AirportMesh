@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Polly;
 
 namespace CheckInService
 {
@@ -30,6 +25,27 @@ namespace CheckInService
                 options.AddPolicy("AllowLocalhostOrigin",
                     builder => builder.WithOrigins("http://localhost:8080").WithMethods("GET", "PUT"));
             });
+
+            // services.AddHttpClient<HomelandSecurityClient>(client =>
+            // {
+            //     client.BaseAddress = new Uri("http://airportmesh.homelandsecurity/");
+            // })
+
+            #region
+
+            Random jitterer = new Random(); 
+
+            services.AddHttpClient<HomelandSecurityClient>(client =>
+                {
+                    client.BaseAddress = new Uri("http://airportmesh.homelandsecurity/");
+                })
+                .AddTransientHttpErrorPolicy(builder => builder
+                    .WaitAndRetryAsync(3, retryAttempt =>
+                         TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
+                         + TimeSpan.FromMilliseconds(jitterer.Next(0, 100)))
+                );
+
+            #endregion
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }

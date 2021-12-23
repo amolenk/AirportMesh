@@ -39,11 +39,6 @@ module.exports = {
     ]
   },
   plugins: [
-    new webpack.EnvironmentPlugin([
-        'AIRPORTMESH_MESH_IP',
-        'AIRPORTMESH_STORAGE_ACCOUNT_NAME',
-        'AIRPORTMESH_STORAGE_ACCOUNT_KEY'
-    ]),
     new CleanWebpackPlugin('./wwwroot/dist'),
     new HtmlWebpackPlugin({
       hash: true,
